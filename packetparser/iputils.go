@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"github.com/milosgajdos83/tenus"
 	"net"
 	"time"
 )
@@ -54,38 +52,4 @@ func WaitForInterfaceStatusUp(ifname string, timeout time.Duration) error {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-}
-
-func ConfigureLinkLocalAddress(ifname string) (*net.IP, error) {
-	// Configure the link-local address for the given interface, via Linux's
-	// netlink, and bring the interface up
-	llAddr, llNet, err := GetLinkLocalAddr(ifname)
-	if err != nil {
-		return nil, err
-	}
-	dl, err := tenus.NewLinkFrom(ifname)
-	if err != nil {
-		return nil, err
-	}
-	addrs, err := dl.NetInterface().Addrs()
-	if err != nil {
-		return nil, err
-	}
-	found := false
-	for _, addr := range addrs {
-		if uAddr, ok := addr.(*net.IPNet); ok {
-			if uAddr.IP.To16() != nil && bytes.Equal(uAddr.IP, *llAddr) {
-				found = true
-			}
-		}
-	}
-	if !found {
-		if err = dl.SetLinkIp(*llAddr, llNet); err != nil {
-			return nil, err
-		}
-		if err = dl.SetLinkUp(); err != nil {
-			return nil, err
-		}
-	}
-	return llAddr, nil
 }
